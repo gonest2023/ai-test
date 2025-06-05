@@ -1,0 +1,137 @@
+# name: my_ai_project # 项目名称
+name: ${COMPOSE_PROJECT_NAME} # 项目名称
+
+services:
+  # Ollama 服务 - AI 模型服务器
+  ollama-server:
+    image: ollama/ollama:latest
+    container_name: ollama-server  # 保持与服务名一致
+    restart: unless-stopped
+    
+    # 可选：为服务指定配置文件，便于在不同环境下使用
+    # profiles:
+    #   - ollama
+    #   - production
+    #   - development
+    
+    # 数据卷挂载
+    volumes:
+      # 方式1：使用具名卷（推荐）
+      - ollama_data:/root/.ollama
+      
+      # 方式2：使用tmpfs（内存文件系统，重启后数据丢失）
+      # - type: tmpfs
+      #   target: /root/.ollama
+      #   tmpfs:
+      #     size: 4g
+      #     mode: 777
+      
+      # 方式3：匿名卷示例
+      # - /tmp
+      
+      # 方式4：主机目录挂载示例（Windows路径）
+      # - d:/custom_config:/config:ro
+    
+    entrypoint: ""   # 👈 关闭原来的 /bin/ollama
+    command: >
+      sh -c "ollama serve &
+             sleep 5 &&
+             ollama pull gemma3:1b &&
+             wait"
+    # ollama serve & sleep 5 && ollama pull gemma3:1b && wait
+
+
+    # 网络配置（可选，默认会创建项目网络）
+
+    networks:
+      - ai_network
+    
+    # 可选：直接暴露端口（如果需要从外部访问）
+    # ports:
+    #   - "11434:11434"
+    
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          memory: 2G
+    
+
+
+  # Open WebUI - Ollama的Web界面
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    
+    # 端口映射
+    ports:
+      # - "8080:8080"  # 默认端口3000，可通过环境变量覆盖
+      - "${APP_PORT:-3000}:8080"  # 默认端口3000，可通过环境变量覆盖
+
+    # profiles:
+    #   - open-webui
+    #   - production
+    
+    # 环境变量
+    environment:
+      - OLLAMA_BASE_URL=http://ollama-server:11434
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama-server:11434}
+      # - LOG_LEVEL=info
+      # - WEBUI_AUTH=true
+      # - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-change_this_secret_key}
+    
+    # 数据持久化
+    volumes:
+      - openwebui_data:/app/backend/data
+    
+    # 网络配置
+    networks:
+      - ai_network
+    
+    # 服务依赖
+    depends_on:
+      - ollama-server
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+ 
+# 网络配置
+networks:
+  ai_network:
+    # driver: bridge
+    # ipam:
+    #   driver: default
+    #   config:
+    #     - subnet: 172.28.0.0/16
+
+# 数据卷声明
+volumes:
+  ollama_data:
+    # external: true  # 使用外部卷，确保在不同环境中数据一致性
+  openwebui_data:
+
+
+# 可选：包含其他配置文件
+include:
+  - nginx_app.yaml
+
+# 可选：外部配置文件
+# configs:
+#   ollama_config:
+#     file: ./ollama-config.json
+ 
