@@ -1,0 +1,79 @@
+# .dockerignore 模板
+# 该文件用于指定在构建 Docker 镜像时要忽略的文件和目录
+# 这样可以减少镜像体积，加快构建速度，并保护敏感信息
+
+# 忽略 node_modules 目录（常见于 Node.js 项目，依赖会在镜像内重新安装）
+node_modules
+
+# 忽略 Python 虚拟环境目录
+venv/
+.env/
+
+# 忽略日志文件
+*.log
+
+# 忽略操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# 忽略 Git 相关文件和目录
+.git
+.gitignore
+
+# 忽略 Dockerfile 本身（可选，通常不需要忽略）
+# Dockerfile
+
+# 忽略构建输出目录（如 dist、build、tmp 等）
+dist/
+build/
+tmp/
+
+# 忽略环境变量文件（如包含敏感信息时）
+.env
+.env.*
+
+# 忽略测试相关文件和目录
+tests/
+__pycache__/
+*.pyc
+
+# 你可以根据实际项目需求添加更多需要忽略的文件或目录
+
+
+# =========================
+# 目录、文件、非的匹配样例
+# =========================
+
+# 忽略某个目录（以斜杠结尾）
+example_dir/      # 忽略 example_dir 目录及其所有内容
+
+# 忽略某个文件（直接写文件名或路径）
+secret.txt        # 忽略根目录下的 secret.txt 文件
+config/settings.yaml  # 忽略 config 目录下的 settings.yaml 文件
+
+
+# =========================
+# 通配符匹配样例
+# =========================
+
+# 忽略所有以 .bak 结尾的备份文件
+*.bak
+
+# 忽略所有以 test- 开头的文件
+test-*
+
+# 忽略所有 images 目录下的 png 文件
+images/*.png
+
+# 忽略所有子目录下的 debug.log 文件
+**/debug.log
+
+# 忽略所有以 .cache 结尾的目录
+*.cache/
+
+# 非（取反）规则：以 ! 开头，表示不忽略某些文件或目录
+!important.bak   # 即使前面规则忽略了 bak 文件，也包含 important.bak
+!config/keep.yaml # 保留 config 目录下的 keep.yaml 文件
+
+# 注意：非规则必须在被忽略规则之后才有效
+

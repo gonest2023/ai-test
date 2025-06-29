@@ -1,0 +1,102 @@
+# --- 构建阶段 ---
+# 第一个FROM指令，它的索引是0
+FROM python:3.13.5-slim AS builder
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制本地代码到容器中
+COPY . /app
+
+# 安装Python依赖到 /app/site-packages 目录下
+# --target 参数指定了安装路径
+RUN pip install --no-cache-dir --target /app/site-packages requests bs4
+
+
+# --- 生产阶段 ---
+# 使用更小的 Alpine 基础镜像
+FROM python:3.13.5-alpine
+
+# 设置工作目录
+WORKDIR /app
+
+# 从第一个阶段（索引为0）复制整个 /app 目录
+# COPY --from=0 /app /app
+COPY --from=builder /app /app
+
+# 将 /app/site-packages 添加到 Python 路径中，这样 Python 才能找到这些库
+ENV PYTHONPATH=/app/site-packages:$PYTHONPATH
+
+# 设置环境变量，防止Python生成pyc文件
+ENV TARGET_URL="https://www.baidu.com"
+
+# 设置维护者信息
+LABEL maintainer="name@gmail.com"
+LABEL version="0.1"
+
+# 设置容器启动时执行的命令
+ENTRYPOINT [ "python" ]
+CMD ["my_spider.py"]
+
+
+# # 常用优化建议：
+# # 1. 多阶段构建可减少镜像体积
+# # 2. 合理利用缓存层，先COPY依赖文件再安装依赖
+# # 3. 使用非root用户运行应用（安全性更高）
+# # 4. 清理无用文件，减少镜像大小
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 选择基础镜像（以官方的Python 3.13为例）
+# FROM python:3.13.5-slim
+
+# # 设置工作目录
+# WORKDIR /app
+
+# # 复制本地代码到容器中
+# # COPY . /app
+
+# # 安装Python依赖
+# RUN pip install --no-cache-dir requests bs4
+
+# # 设置构建环境变量
+# ARG VERSION=0.1
+# ARG TZ="UTC"
+
+# # 设置维护者信息
+# LABEL maintainer="name@gmail.com"
+# # LABEL version="0.1"
+# LABEL description="A simple web scraper using Python"
+# LABEL version=$VERSION
+
+
+
+# # 设置环境变量
+# ENV TARGET_URL="https://www.baidu.com" 
+# # ENV TZ="UTC"
+# ENV TZ=$TZ
+
+
+
+
+# ENTRYPOINT [ "python" ]
+# # 设置容器启动时执行的命令
+# CMD ["my_spider.py"]
